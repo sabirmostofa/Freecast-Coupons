@@ -1,5 +1,5 @@
 <?php
-$theads=array('Coupon Lot ID', 'Generation Date', 'Amount', 'Used Amount');
+$theads=array('Coupon Lot ID', 'Generation Date', 'Amount', 'Used Amount','Delete','Export');
 global $wpFreecastCoupons;
 if(isset($_POST['main-submit'])):
 	$_POST = array_map( create_function('$a', 'return trim($a);'), $_POST);
