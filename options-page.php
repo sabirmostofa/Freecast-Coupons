@@ -7,12 +7,13 @@ if(isset($_POST['main-submit'])):
 $error=0;
 foreach($fields as $field):
     if( !isset($_POST[$field]))
+        if($field != 'expire_dt')
         $error=1;
 endforeach;
 if(!$error){
         $uniq_id = $wpFreecastCoupons -> generate_coupons($_POST);
         if($uniq_id)echo"<div class='updated'>Coupons Generated Successfully. Coupon Id is $uniq_id</div>";
-}else echo 'Some field is missing';
+}else echo '<div class="updated">Some field is missing</div>';
         endif;
      
 ?>
@@ -35,7 +36,7 @@ if(!$error){
  <textarea name="description" rows="8" cols="100">
  </textarea>
    <br/>
-   <b>Expire Date:</b>
+   <b>Expire Date(Optional):</b>
    <br/>
    
  <input style="width:40%" id="datepicker" type='text' name='expire_dt' />
@@ -63,9 +64,16 @@ if(!$error){
             <?php
                    $ids = get_option('freecast_coupon_ids');
                    if(!$ids)$ids= array();
+                   $del_image = plugins_url('/', __FILE__) . 'images/b_drop.png';
+                   
         foreach($ids as $id):
             $data = $wpFreecastCoupons ->return_coupon_data($id);
-                echo "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td></tr>";
+        $export_link=home_url().'?export-coupon-lot='.$id;
+
+                echo "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td>
+        <td><a class='delete-fc-coupon' href='#'><img src='$del_image'/></a></td>
+        <td><a target='_blank' href='$export_link'>Export</td>
+        </tr>";
             endforeach;
             ?>
         </tbody>

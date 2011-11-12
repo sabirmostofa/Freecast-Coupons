@@ -15,15 +15,20 @@ $wpFreecastCoupons = new wpFreecastCoupons();
 class wpFreecastCoupons {
 
     public $table = '';
-    public $ar = array();  
+    public $ar = array();
     public $single_coupons = array();
 
     function __construct() {
         global $wpdb;
         $this->table = $wpdb->prefix . 'mgm_coupons';
         $this->ar = array_merge(range(1, 9), range('A', 'N'), range('P', 'Z'));
+        add_action('plugins_loaded', array($this, 'export_csv'), 50);
         add_action('admin_menu', array($this, 'CreateMenu'), 50);
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
+    }
+    
+    function export_csv(){
+        
     }
 
     function admin_scripts() {
@@ -44,22 +49,37 @@ class wpFreecastCoupons {
         $date = date('Y-m-d H:i:s');
         $coupons = $this->generate_single_coupons($coupon_amt, $uniq_id);
 
+
+
         foreach ($coupons as $coupon):
-            $wpdb->insert($this->table, array(
-                'name' => $coupon,
-                'value' => $value,
-                'description' => $description,
-                'use_limit' => 1,
-                'expire_dt' => $expire_dt,
-                'create_dt' => $date
-            ));
+            if (isset($expire_dt) && strlen($expire_dt) > 2) {
+                $insert = array(
+                    'name' => $coupon,
+                    'value' => $value,
+                    'description' => $description,
+                    'use_limit' => 1,
+                    'expire_dt' => $expire_dt,
+                    'create_dt' => $date
+                );
+            } else {
+                $insert = array(
+                    'name' => $coupon,
+                    'value' => $value,
+                    'description' => $description,
+                    'use_limit' => 1,
+                    'create_dt' => $date
+                );
+            }
+
+            $wpdb->insert($this->table, $insert);
 
         endforeach;
 //       $option_ar = array($uniq_id, $date,$amt,0,$coupons);
-      $prev_rec = get_option('freecast_coupon_ids');
-       if(!$prev_rec)$prev_rec= array();
-        $prev_rec[]=$uniq_id;
-     update_option('freecast_coupon_ids', $prev_rec);
+        $prev_rec = get_option('freecast_coupon_ids');
+        if (!$prev_rec)
+            $prev_rec = array();
+        $prev_rec[] = $uniq_id;
+        update_option('freecast_coupon_ids', $prev_rec);
         return $uniq_id;
     }
 
@@ -74,7 +94,8 @@ class wpFreecastCoupons {
 
     function id_exists($id) {
         $ids = get_option('freecast_coupon_ids');
-         if(!$ids)$ids= array();
+        if (!$ids)
+            $ids = array();
         foreach ($ids as $lot):
             if ($lot == $id)
                 return true;
@@ -95,17 +116,18 @@ class wpFreecastCoupons {
 
         return $coupons;
     }
-    
-    function return_coupon_data($id){  
+
+    function return_coupon_data($id) {
         global $wpdb;
-        $results = $wpdb -> get_results("select * from $this->table where name like '$id-%'");
-        
-        $count=0;
-        foreach($results as $res){
-            if($res ->used_count ==1)$count++;            
+        $results = $wpdb->get_results("select * from $this->table where name like '$id-%'");
+
+        $count = 0;
+        foreach ($results as $res) {
+            if ($res->used_count == 1)
+                $count++;
         }
-        
-        return array($id, $res->description, $res->create_dt, $res->expire_dt, count($results), $count);
+$expire_dt = (strlen($res->expire_dt)>2)? $res->expire_dt:'Null';
+        return array($id, $res->description, $res->create_dt, $expire_dt , count($results), $count);
     }
 
     function CreateMenu() {
