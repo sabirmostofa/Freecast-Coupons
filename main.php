@@ -36,7 +36,7 @@ class wpFreecastCoupons {
             $id = $_REQUEST['export-coupon-lot'];
             $results = $wpdb->get_results("select name,expire_dt from $this->table where name like '$id-%' ");
 
-            $str = "Coupon_ID,EXPIRE_Date\r\n";
+            $str = "Coupon,EXPIRE_Date\r\n";
 
             foreach ($results as $res):
                 $expire_dt = (strlen($res->expire_dt) > 2) ? $res->expire_dt : 'None';
