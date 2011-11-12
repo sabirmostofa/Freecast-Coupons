@@ -25,10 +25,29 @@ class wpFreecastCoupons {
         add_action('plugins_loaded', array($this, 'export_csv'), 50);
         add_action('admin_menu', array($this, 'CreateMenu'), 50);
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
+        add_action('wp_ajax_coupon_ajax_remove', array($this, 'coupon_ajax_remove'));
     }
-    
-    function export_csv(){
-        
+
+    function export_csv() {
+        global $wpdb;
+        if (isset($_REQUEST['export-coupon-lot'])) {
+            if (!current_user_can('administrator'))
+                exit('Only Administrator Can view the contents');
+            $id = $_REQUEST['export-coupon-lot'];
+            $results = $wpdb->get_results("select name,expire_dt from $this->table where name like '$id-%' ");
+
+            $str = "Coupon_ID,EXPIRE_Date\r\n";
+
+            foreach ($results as $res):
+                $expire_dt = (strlen($res->expire_dt) > 2) ? $res->expire_dt : 'None';
+                $str .= $res->name . ',' . $expire_dt . "\r\n";
+            endforeach;
+            header('Content-type: text/csv');
+            header("Content-disposition: attachment;filename=Coupon-Lot-{$id}.csv");
+
+            echo $str;
+            exit;
+        }
     }
 
     function admin_scripts() {
@@ -126,8 +145,8 @@ class wpFreecastCoupons {
             if ($res->used_count == 1)
                 $count++;
         }
-$expire_dt = (strlen($res->expire_dt)>2)? $res->expire_dt:'Null';
-        return array($id, $res->description, $res->create_dt, $expire_dt , count($results), $count);
+        $expire_dt = (strlen($res->expire_dt) > 2) ? $res->expire_dt : 'None';
+        return array($id, $res->description, $res->create_dt, $expire_dt, count($results), $count);
     }
 
     function CreateMenu() {
@@ -136,6 +155,19 @@ $expire_dt = (strlen($res->expire_dt)>2)? $res->expire_dt:'Null';
 
     function OptionsPage() {
         include 'options-page.php';
+    }
+
+    function coupon_ajax_remove() {
+        global $wpdb;
+        $id = $_REQUEST['key'];
+        $prev_rec = get_option('freecast_coupon_ids');
+        foreach ($prev_rec as $key => $val):
+            if ($val == $id)
+                unset($prev_rec[$key]);
+        endforeach;
+        $wpdb->query("delete from $this->table where name like '$id-%'");
+        update_option('freecast_coupon_ids', $prev_rec);
+        exit;
     }
 
 }

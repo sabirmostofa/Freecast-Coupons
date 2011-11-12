@@ -1,5 +1,5 @@
 <?php
-$theads=array( 'ID', 'Description', 'Generation Date', 'Expires', 'Amount', 'Used Amount','Delete','Export');
+$theads=array( 'Delete','ID', 'Description', 'Generation Date', 'Expires', 'Amount', 'Used Amount','Export');
 $fields = array( 'value', 'coupon_amt', 'description', 'expire_dt');
 global $wpFreecastCoupons;
 if(isset($_POST['main-submit'])):
@@ -63,15 +63,19 @@ if(!$error){
         <tbody>
             <?php
                    $ids = get_option('freecast_coupon_ids');
+                   
                    if(!$ids)$ids= array();
+                   $ids= array_reverse($ids);
                    $del_image = plugins_url('/', __FILE__) . 'images/b_drop.png';
                    
         foreach($ids as $id):
             $data = $wpFreecastCoupons ->return_coupon_data($id);
         $export_link=home_url().'?export-coupon-lot='.$id;
 
-                echo "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td>
+                echo "<tr>
         <td><a class='delete-fc-coupon' href='#'><img src='$del_image'/></a></td>
+        <td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td>
+        
         <td><a target='_blank' href='$export_link'>Export</td>
         </tr>";
             endforeach;
