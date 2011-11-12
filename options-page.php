@@ -1,10 +1,18 @@
 <?php
-$theads=array('Name', 'ID', 'Description', 'Generation Date', 'Amount', 'Used Amount','Delete','Export');
+$theads=array( 'ID', 'Description', 'Generation Date', 'Expires', 'Amount', 'Used Amount','Delete','Export');
+$fields = array( 'value', 'coupon_amt', 'description', 'expire_dt');
 global $wpFreecastCoupons;
 if(isset($_POST['main-submit'])):
-	$_POST = array_map( create_function('$a', 'return trim($a);'), $_POST);	    
-        $coupons = $wpFreecastCoupons -> generate_coupons($_POST);
-        if($coupons)echo'Coupons Generated Successfully';
+	$_POST = array_map( create_function('$a', 'return trim($a);'), $_POST);
+$error=0;
+foreach($fields as $field):
+    if( !isset($_POST[$field]))
+        $error=1;
+endforeach;
+if(!$error){
+        $uniq_id = $wpFreecastCoupons -> generate_coupons($_POST);
+        if($uniq_id)echo"<div class='updated'>Coupons Generated Successfully. Coupon Id is $uniq_id</div>";
+}else echo 'Some field is missing';
         endif;
      
 ?>
@@ -13,13 +21,10 @@ if(isset($_POST['main-submit'])):
     
     <form action ='' method='post'>
          <h3>Generate and Export Coupons</h3>
-<b> Name:</b>
-  <br/>
- <input style="width:40%" type='text' name='name'/>
- <br/>
+
   <b>Value(In Percentage)</b>
   <br/>
- <input style="width:40%" type='text' name='name' value="50%"/>
+ <input style="width:40%" type='text' name='value' value="50%"/>
  <br/>
  <b>Number of coupons to generate in a lot(Default is 1000)</b>
    <br/>
@@ -56,9 +61,11 @@ if(isset($_POST['main-submit'])):
         </thead>
         <tbody>
             <?php
-            $prevs = (get_option('freecast_coupon_lots'))?get_option('freecast_coupon_lots'):array();
-            foreach($prevs as $single):
-                echo "<tr><td>$single[0]</td><td>$single[1]</td><td>$single[2]</td><td>$single[3]</td></tr>";
+                   $ids = get_option('freecast_coupon_ids');
+                   if(!$ids)$ids= array();
+        foreach($ids as $id):
+            $data = $wpFreecastCoupons ->return_coupon_data($id);
+                echo "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td></tr>";
             endforeach;
             ?>
         </tbody>

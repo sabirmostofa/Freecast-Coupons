@@ -15,8 +15,7 @@ $wpFreecastCoupons = new wpFreecastCoupons();
 class wpFreecastCoupons {
 
     public $table = '';
-    public $ar = array();
-    public $prevs = array();
+    public $ar = array();  
     public $single_coupons = array();
 
     function __construct() {
@@ -38,29 +37,30 @@ class wpFreecastCoupons {
         }
     }
 
-    function generate_coupons($amt) {
+    function generate_coupons($post) {
         global $wpdb;
-
+        extract($post);
         $uniq_id = $this->get_uniq_id();
         $date = date('Y-m-d H:i:s');
-        $coupons = $this->generate_single_coupons($amt, $uniq_id);
+        $coupons = $this->generate_single_coupons($coupon_amt, $uniq_id);
 
         foreach ($coupons as $coupon):
             $wpdb->insert($this->table, array(
-                'name' => $name,
+                'name' => $coupon,
                 'value' => $value,
                 'description' => $description,
                 'use_limit' => 1,
-                'expire_dt' => $expire,
+                'expire_dt' => $expire_dt,
                 'create_dt' => $date
             ));
 
         endforeach;
 //       $option_ar = array($uniq_id, $date,$amt,0,$coupons);
-//       $prev_rec = get_option('freecast_coupon_lots');
-//       if(!$prev_rec)$prev_rec= array();
-//      $prev_rec[]=$option_ar;
-//      update_option('freecast_coupon_lots', $prev_rec);
+      $prev_rec = get_option('freecast_coupon_ids');
+       if(!$prev_rec)$prev_rec= array();
+        $prev_rec[]=$uniq_id;
+     update_option('freecast_coupon_ids', $prev_rec);
+        return $uniq_id;
     }
 
     function get_uniq_id() {
@@ -73,8 +73,10 @@ class wpFreecastCoupons {
     }
 
     function id_exists($id) {
-        foreach ($this->prevs as $lot):
-            if ($lot[0] == id)
+        $ids = get_option('freecast_coupon_ids');
+         if(!$ids)$ids= array();
+        foreach ($ids as $lot):
+            if ($lot == $id)
                 return true;
         endforeach;
     }
@@ -92,6 +94,18 @@ class wpFreecastCoupons {
                     }
 
         return $coupons;
+    }
+    
+    function return_coupon_data($id){  
+        global $wpdb;
+        $results = $wpdb -> get_results("select * from $this->table where name like '$id-%'");
+        
+        $count=0;
+        foreach($results as $res){
+            if($res ->used_count ==1)$count++;            
+        }
+        
+        return array($id, $res->description, $res->create_dt, $res->expire_dt, count($results), $count);
     }
 
     function CreateMenu() {
