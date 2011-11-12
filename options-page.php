@@ -1,10 +1,9 @@
 <?php
-$theads=array('Coupon Lot ID', 'Generation Date', 'Amount', 'Used Amount','Delete','Export');
+$theads=array('Name', 'ID', 'Description', 'Generation Date', 'Amount', 'Used Amount','Delete','Export');
 global $wpFreecastCoupons;
 if(isset($_POST['main-submit'])):
-	$_POST = array_map( create_function('$a', 'return trim($a);'), $_POST);
-	extract($_POST);        
-        $coupons = $wpFreecastCoupons -> generate_coupons($coupon_amt);
+	$_POST = array_map( create_function('$a', 'return trim($a);'), $_POST);	    
+        $coupons = $wpFreecastCoupons -> generate_coupons($_POST);
         if($coupons)echo'Coupons Generated Successfully';
         endif;
      
@@ -14,9 +13,27 @@ if(isset($_POST['main-submit'])):
     
     <form action ='' method='post'>
          <h3>Generate and Export Coupons</h3>
- Number of coupons to generate in a lot(Default is 1000)
+<b> Name:</b>
   <br/>
+ <input style="width:40%" type='text' name='name'/>
+ <br/>
+  <b>Value(In Percentage)</b>
+  <br/>
+ <input style="width:40%" type='text' name='name' value="50%"/>
+ <br/>
+ <b>Number of coupons to generate in a lot(Default is 1000)</b>
+   <br/>
  <input style="width:40%" type='text' name='coupon_amt' value="1000"/>
+ <br/>
+ <b>Description:</b>
+   <br/>
+ <textarea name="description" rows="8" cols="100">
+ </textarea>
+   <br/>
+   <b>Expire Date:</b>
+   <br/>
+   
+ <input style="width:40%" id="datepicker" type='text' name='expire_dt' />
  <br/>
  <br/>
 
