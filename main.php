@@ -35,7 +35,8 @@ class wpFreecastCoupons {
             if (!current_user_can('administrator'))
                 exit('Only Administrator Can view the contents');
             $id = $_REQUEST['export-coupon-lot'];
-            $results = $wpdb->get_results("select name,expire_dt from $this->table where name like '$id-%' ");
+            $vendor = $_REQUEST['vendor_id'];
+            $results = $wpdb->get_results("select name,expire_dt from $this->table as a inner join {$wpdb->prefix}coupon_relations as b on a.id=b.coupon_id where a.name like '$id-%' and b.vendor_id=$vendor ");
 
             $str = "Coupon,EXPIRE_Date\r\n";
 
