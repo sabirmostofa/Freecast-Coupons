@@ -26,6 +26,7 @@ class wpFreecastCoupons {
         add_action('admin_menu', array($this, 'CreateMenu'), 50);
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
         add_action('wp_ajax_coupon_ajax_remove', array($this, 'coupon_ajax_remove'));
+        register_activation_hook(__FILE__, array($this, 'create_tables'));
     }
 
     function export_csv() {
@@ -62,6 +63,7 @@ class wpFreecastCoupons {
     }
 
     function generate_coupons($post) {
+        if(!isset($_POST['vendor_to_assign']) || !isset($_POST['user_to_assign']))return;
         global $wpdb;
         extract($post);
         $uniq_id = $this->get_uniq_id();
@@ -91,6 +93,21 @@ class wpFreecastCoupons {
             }
 
             $wpdb->insert($this->table, $insert);
+           $coupon_id = $wpdb->get_var("select id from {$wpdb->prefix}mgm_coupons order by id desc limit 1");
+           $vendor = mysql_real_escape_string($_POST['vendor_to_assign']);
+           $vendor_id = $wpdb -> get_var("select id from {$wpdb->prefix}coupon_vendors where vendor='$vendor' ");           
+           
+           $user= get_user_by('login', $_POST['user_to_assign']);
+            $insert_rel = array( 
+                'coupon_id' =>$coupon_id,
+                'user_id' => $user->ID,
+                'vendor_id' => $vendor_id
+            );
+                
+            
+         
+            $wpdb->insert($wpdb->prefix.'coupon_relations', $insert_rel);
+           
 
         endforeach;
 //       $option_ar = array($uniq_id, $date,$amt,0,$coupons);
@@ -150,7 +167,11 @@ class wpFreecastCoupons {
     }
 
     function CreateMenu() {
+        add_menu_page('Manage Coupon', 'Manage Coupon', 'read','wpManageCoupons', array($this, 'main_menu'));
         add_submenu_page('options-general.php', 'Coupon Settings', 'Coupon Settings', 'activate_plugins', 'wpFreecastCoupons', array($this, 'OptionsPage'));
+    }
+    function main_menu(){
+        include 'user-options.php';
     }
 
     function OptionsPage() {
@@ -168,6 +189,36 @@ class wpFreecastCoupons {
         $wpdb->query("delete from $this->table where name like '$id-%'");
         update_option('freecast_coupon_ids', $prev_rec);
         exit;
+    }
+    
+    function vendor_exists($vendor){
+        global $wpdb;
+        $vendor=mysql_real_escape_string($vendor);
+        return $wpdb->get_var("select vendor from {$wpdb->prefix}coupon_vendors where vendor='$vendor'");
+        
+    }
+
+    function create_tables() {
+        global $wpdb;
+
+        $sql_vendor_table = "CREATE TABLE `" . $wpdb->prefix . "coupon_vendors` (
+`id` INT( 11 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+ `vendor` varchar(20) not null, 
+    key `vendor`(`vendor`)
+) ";
+
+        $sql_vendor_coupon = "CREATE TABLE `" . $wpdb->prefix . "coupon_relations` (
+`id` INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`coupon_id` int unsigned not null,
+`user_id` int unsigned not null,
+ `vendor_id` int unsigned not null, 
+    key `coupon_id`(`coupon_id`)
+) ";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+        dbDelta($sql_vendor_table);
+        dbDelta($sql_vendor_coupon);
     }
 
 }
