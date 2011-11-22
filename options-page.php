@@ -1,6 +1,6 @@
 <?php
 global $wpdb;
-$theads = array('Delete', 'ID', 'Description', 'Generation Date', 'Expires', 'Amount', 'Used Amount', 'Export');
+$theads = array('Delete', 'ID', 'Vendor', 'User', 'Description', 'Generation Date', 'Expires', 'Amount', 'Used Amount', 'Export');
 $fields = array('value', 'coupon_amt', 'description', 'expire_dt');
 global $wpFreecastCoupons;
 if (isset($_POST['main-submit'])):
@@ -37,16 +37,15 @@ if (isset($_POST['file_upload'])):
     $name = $_FILES["vendor_file"]["name"];
     $s = preg_replace('/([^.]+)/', "\${1}--$t", $name, 1);
     move_uploaded_file($file, $dir . '/vendor-csv/' . $s);
-    $file = $dir.'/vendor-csv/'.$s;
+    $file = $dir . '/vendor-csv/' . $s;
 
     //uploading to database
     if (($handle = fopen($file, "r")) !== FALSE) {
         while (($data = fgetcsv($handle, 10000, ",")) !== FALSE) {
             $data_real = $data;
-            $data = array_map(create_function('$a', 'return "\"" . mysql_real_escape_string( trim($a) ) . "\"";'), $data);         
-            if(!$this-> vendor_exists($data_real[0]) && strlen($data[0]) )   
-            $wpdb -> query("insert into {$wpdb->prefix}coupon_vendors(vendor) values('$data[0]')");
-            
+            $data = array_map(create_function('$a', 'return "\"" . mysql_real_escape_string( trim($a) ) . "\"";'), $data);
+            if (!$this->vendor_exists($data_real[0]) && strlen($data[0]))
+                $wpdb->query("insert into {$wpdb->prefix}coupon_vendors(vendor) values('$data[0]')");
         }
 
         //var_dump($query);      
@@ -60,15 +59,15 @@ if (isset($_POST['file_upload'])):
 endif;
 
 //If single vendor
-if(isset( $_POST['vendor_single'] )):
+if (isset($_POST['vendor_single'])):
     $vendor = mysql_real_escape_string(trim($_POST['vendor_single']));
-if(!$this-> vendor_exists(trim($_POST['vendor_single'])) && strlen($vendor)){
-    $wpdb -> query("insert into {$wpdb->prefix}coupon_vendors(vendor) values('$vendor')");
-     echo"<div class='updated'>Vendor added</div>";
-}  else {
-    echo"<div class='updated'>Already in Database or at least a character needed</div>";
-}
-    
+    if (!$this->vendor_exists(trim($_POST['vendor_single'])) && strlen($vendor)) {
+        $wpdb->query("insert into {$wpdb->prefix}coupon_vendors(vendor) values('$vendor')");
+        echo"<div class='updated'>Vendor added</div>";
+    } else {
+        echo"<div class='updated'>Already in Database or at least a character needed</div>";
+    }
+
 endif;
 ?>
 
@@ -150,19 +149,52 @@ endif;
 
             if (!$ids)
                 $ids = array();
-            $ids = array_reverse($ids);
+            $coupon_ids = array_reverse($ids);
             $del_image = plugins_url('/', __FILE__) . 'images/b_drop.png';
+            $final_results = array();
 
-            foreach ($ids as $id):
-                $data = $wpFreecastCoupons->return_coupon_data($id);
-                $export_link = home_url() . '?export-coupon-lot=' . $id;
+            foreach ($coupon_ids as $single):
+                $vendors = array();
+                $res = $wpdb->get_results("select * from {$wpdb->prefix}mgm_coupons as a inner join {$wpdb->prefix}coupon_relations as b on a.id=b.coupon_id where a.name like '$single-%'  ");
+                if (empty($res))
+                    continue;
+                foreach ($res as $s):
+                    $final_results[$single][$s->vendor_id][] = $s;
+                endforeach;
+            endforeach;
+            
 
-                echo "<tr>
+
+            foreach ($final_results as $key => $single):
+                foreach ($single as $key_deep => $single_deep):
+                 $which_user =get_user_by('id', $single_deep[0]->user_id);
+            $which_id = $which_id = $which_user->user_login;
+                    $vendor_name = $wpdb->get_var("select vendor from {$wpdb->prefix}coupon_vendors where id=$key_deep");
+                     $coup_id =$single_deep[0]-> coupon_id ;
+                    $export_link = home_url() . '?export-coupon-lot=' . $key;
+                    $amount = count($single_deep);
+                    $description = $wpdb->get_var("select description from {$wpdb->prefix}mgm_coupons where id=$coup_id");
+                    $gen_date = $wpdb->get_var("select create_dt from {$wpdb->prefix}mgm_coupons where id=$coup_id");
+                    $valid =  $wpdb->get_var("select expire_dt from {$wpdb->prefix}mgm_coupons where id=$coup_id");
+$valid = ($valid)? $valid:'None';
+$used = 0;
+foreach($single_deep as $check):
+    if($wpdb->get_var("select used_count from {$wpdb->prefix}mgm_coupons where id=$check->coupon_id"))
+   $used++;
+endforeach;
+                    echo "<tr>
         <td><a class='delete-fc-coupon' href='#'><img src='$del_image'/></a></td>
-        <td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td>
-        
+        <td>$key</td>
+                <td>$vendor_name</td>
+                <td>$which_id</td>
+                <td>$description</td>
+                <td>$gen_date</td>
+                <td>$valid</td>
+                    <td>$amount</td>
+        <td>$used</td>
         <td><a target='_blank' href='$export_link'>Export</td>
         </tr>";
+                endforeach;
             endforeach;
             ?>
         </tbody>

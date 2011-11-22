@@ -155,7 +155,7 @@ class wpFreecastCoupons {
 
     function return_coupon_data($id) {
         global $wpdb;
-        $results = $wpdb->get_results("select * from $this->table where name like '$id-%'");
+        $results = $wpdb->get_results("select * from $this->table as inner join {$wpdb->prefix}coupon_relations as b on a.id=b.coupon_id where name like '$id-%'");
 
         $count = 0;
         foreach ($results as $res) {

@@ -30,7 +30,7 @@ if (isset($_POST['file_upload'])):
     
     $vendor = mysql_real_escape_string($_POST['vendor_to_assign']);
      $vendor_id = $wpdb -> get_var("select id from {$wpdb->prefix}coupon_vendors where vendor='$vendor' ");  
-var_dump($vendor_id);
+
     //uploading to database
     if (($handle = fopen($file, "r")) !== FALSE) {
         while (($data = fgetcsv($handle, 10000, ",")) !== FALSE) {
@@ -40,16 +40,13 @@ var_dump($vendor_id);
             $insert_rel = array(                
                 'vendor_id' => $vendor_id
             );
-            var_dump($insert_rel);
+           
             $where = array(
                 'coupon_id' =>$coupon_id,
                 'user_id' => $user->ID,
-            );
-            var_dump($where);
-                
-            
+            );   
          
-            var_dump( $wpdb->update($wpdb->prefix.'coupon_relations', $insert_rel,$where));
+            $wpdb->update($wpdb->prefix.'coupon_relations', $insert_rel,$where);
             
         }
 
