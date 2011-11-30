@@ -4,6 +4,7 @@ global $wpdb;
 $theads = array('ID', 'Vendor', 'Amount');
 
 $user = wp_get_current_user();
+$user_id = $user->ID;
 $users = $wpdb->get_col("select user_id from {$wpdb->prefix}coupon_relations");
 $users = array_unique($users);
 
@@ -14,6 +15,11 @@ if (!in_array($user->ID, $users))
 
 
 if (isset($_POST['file_upload'])):
+    
+if(isset($_POST['user_to_assign'])){
+    $user= get_user_by('login', $_POST['user_to_assign']);
+    $user_id = $user->ID;    
+}
 
 
 
@@ -43,7 +49,7 @@ if (isset($_POST['file_upload'])):
            
             $where = array(
                 'coupon_id' =>$coupon_id,
-                'user_id' => $user->ID,
+                'user_id' => $user_id
             );   
          
             $wpdb->update($wpdb->prefix.'coupon_relations', $insert_rel,$where);
@@ -62,7 +68,8 @@ endif;
 
 
 // Generating Final results
-
+$user = wp_get_current_user();
+$user_id = $user->ID;
 $coupon_ids = get_option('freecast_coupon_ids');
 $final_results = array();
 
@@ -87,6 +94,21 @@ endforeach;
  <form action ="" method ="post" enctype="multipart/form-data">
      Upload the csv file containing rest of the coupons.
         <input type="file" name="vendor_file" >
+        <br/>
+        <br/>
+        <?php
+        if(current_user_can('administrator') ):            
+   ?>
+        Select the user for whom the coupons were generated:
+                <select name ="user_to_assign">
+            <?php
+            $all_users = $wpdb->get_col("select user_nicename from $wpdb->users ");
+            foreach ($all_users as $user):
+                echo "<option>$user</option>";
+            endforeach;
+            ?>
+        </select>
+        <?php endif; ?>
         <br/>
         <br/>
         Select a Vendor:

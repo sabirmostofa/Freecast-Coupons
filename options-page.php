@@ -171,7 +171,7 @@ endif;
             $which_id = $which_id = $which_user->user_login;
                     $vendor_name = $wpdb->get_var("select vendor from {$wpdb->prefix}coupon_vendors where id=$key_deep");
                      $coup_id =$single_deep[0]-> coupon_id ;
-                    $export_link = home_url() . '?export-coupon-lot=' . $key.'&vendor_id ='.$key_deep;
+                    $export_link = home_url() . '?export-coupon-lot=' . $key.'&vendor-id='.$key_deep;
                     $amount = count($single_deep);
                     $description = $wpdb->get_var("select description from {$wpdb->prefix}mgm_coupons where id=$coup_id");
                     $gen_date = $wpdb->get_var("select create_dt from {$wpdb->prefix}mgm_coupons where id=$coup_id");
